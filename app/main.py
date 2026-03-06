@@ -3,16 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+from app.solar import SolarSystem
 from app.solar import get_solar_power
 from app.battery import Battery
 from app.controller import control_load
 from app.database import SessionLocal, SolarData
 
 import datetime
+import time
+import random
+
+
+
 
 app = FastAPI()
 
-battery = Battery()
+system = SolarSystem()
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +30,7 @@ app.add_middleware(
 # static fayllar
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
+
 @app.get("/")
 def index():
     return FileResponse("frontend/index.html")
@@ -31,11 +38,14 @@ def index():
 
 @app.get("/status")
 def status():
+
+    system.update()
+
     return {
-        "solar_power": 300,
-        "battery_level": 50,
-        "load": "ON"
-    }
+        "solar_power": system.solar_power,
+        "battery_level": system.battery_level,
+        "load": system.load
+    }    
 
 
 @app.get("/history")
