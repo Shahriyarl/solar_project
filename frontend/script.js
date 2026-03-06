@@ -18,7 +18,7 @@ async function updateStatus() {
     const data = await res.json();
 
     document.getElementById("solar").innerText = data.solar_power;
-    document.getElementById("battery").innerText = data.battery_percent;
+    document.getElementById("battery").innerText = data.battery_level;
     document.getElementById("load").innerText = data.load;
 
 }
