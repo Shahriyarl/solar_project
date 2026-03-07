@@ -15,3 +15,22 @@ class Battery:
 
     def percentage(self):
         return round((self.level / self.capacity) * 100, 2)
+    
+
+
+battery_level = 5000
+capacity = 10000
+
+
+def update_battery(power, load):
+
+    global battery_level
+
+    if power > load:
+        battery_level += power - load
+    else:
+        battery_level -= load - power
+
+    battery_level = max(0, min(capacity, battery_level))
+
+    return battery_level

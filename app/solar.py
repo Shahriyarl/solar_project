@@ -1,56 +1,52 @@
 import math
-import random 
+import random
 
-def get_solar_power(hour: int):
-    if 6 <= hour <= 18:
-        base = 100 * math.sin((hour - 6) * math.pi / 12)
-        cloud_effect = random.uniform(0.7, 1.0)
-        return round(base * cloud_effect, 2)
-    return 0        
+def solar_irradiance(hour):
+    """
+    Hesablayır günəş radiasiyasını saat üzrə (0-24)
+    """
+    max_irradiance = 1000  # W/m²
+    value = max_irradiance * math.sin(math.pi * hour / 24)
+    return max(value, 0)
 
-
+def solar_panel_power(irradiance):
+    """
+    Hesablayır paneldən alınan DC gücü
+    """
+    panel_area = 10  # m²
+    efficiency = 0.20  # 20%
+    power = irradiance * panel_area * efficiency
+    return power
 
 class SolarSystem:
-
     def __init__(self):
         self.solar_power = 0
-        self.battery_level = 0
-        self.load = ""
+        self.battery_level = 50
+        self.load = "ON"
 
-    def update(self):
-        # Load random dəyişir
-        if self.battery_level < 10:
-            self.load = "OFF"
+    def update(self, hour):
+        """
+        Günün saatına görə sistem statusunu yeniləyir
+        """
+        irradiance = solar_irradiance(hour)
+        power = solar_panel_power(irradiance)
+        cloud = random.uniform(0.7, 1.0)  # bulud effekti
+        self.solar_power = round(power * cloud, 2)
+
+        # Batareya balansı
+        if self.solar_power > 500:
+            self.battery_level += 2
         else:
-            self.load = "ON"
+            self.battery_level -= 1
 
-        # Günəş enerjisi random dəyişir
-        self.solar_power = random.randint(0, 300)
+        self.battery_level = max(0, min(100, self.battery_level))
 
-        # Günəş zəifdirsə batareya işləyir
-        if self.solar_power <= 10:
-
-            if self.battery_level > 0:
-                self.battery_level -= random.randint(1,3)
-
-        # Günəş varsa batareya dolur
-        else:
-
-            if self.battery_level < 100:
-                self.battery_level += random.randint(1,2)
-
-        # limitlər
-        if self.battery_level < 0:
-            self.battery_level = 0
-
-        if self.battery_level > 100:
-            self.battery_level = 100
-
-
-    def show_status(self):
-
-        print("----- SOLAR SYSTEM -----")
-        print(f"Solar Power: {self.solar_power} W")
-        print(f"Battery Level: {self.battery_level} %")
-        print(f"Load: {self.load}")
-        print("------------------------\n")
+    def get_status(self):
+        """
+        JSON formatında məlumat qaytarır
+        """
+        return {
+            "solar_power": self.solar_power,
+            "battery": self.battery_level,
+            "load": self.load
+        }

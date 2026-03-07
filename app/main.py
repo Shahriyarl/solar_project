@@ -3,23 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.solar import SolarSystem
-from app.solar import get_solar_power
-from app.battery import Battery
-from app.controller import control_load
-from app.database import SessionLocal, SolarData
-
-import datetime
-import time
-import random
-
-
-
+from app.controller import system_step
+from app.database import save_data, SessionLocal, SolarData
 
 app = FastAPI()
 
-system = SolarSystem()
-
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# static fayllar
+# frontend statik fayllar
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 
@@ -38,14 +27,13 @@ def index():
 
 @app.get("/status")
 def status():
-
-    system.update()
-
-    return {
-        "solar_power": system.solar_power,
-        "battery_level": system.battery_level,
-        "load": system.load
-    }    
+    data = system_step()
+    save_data(
+        data["hour"],
+        data["solar_power"],
+        data["battery"]
+    )
+    return data
 
 
 @app.get("/history")

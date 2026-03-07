@@ -1,4 +1,4 @@
-const ctx = document.getElementById('chart');
+const ctx = document.getElementById('chart').getContext('2d');
 
 const chart = new Chart(ctx, {
     type: 'line',
@@ -6,34 +6,42 @@ const chart = new Chart(ctx, {
         labels: [],
         datasets: [{
             label: 'Solar Power',
-            data: [],
-            borderWidth: 2
+            data: []
         }]
+    },
+    options: {
+        responsive: true,
+        animation: false,
+        scales: {
+            x: { title: { display: true, text: 'Hour' } },
+            y: { title: { display: true, text: 'Power (W)' }, beginAtZero: true }
+        }
     }
 });
 
 async function updateStatus() {
+    try {
+        const res = await fetch("/status");
+        const data = await res.json();
 
-    const res = await fetch("/status");
-    const data = await res.json();
+        document.getElementById("solar").innerText = data.solar_power;
+        document.getElementById("battery").innerText = data.battery;
+        document.getElementById("load").innerText = data.load;
+   
+        chart.data.labels.push(data.hour);
+        chart.data.datasets[0].data.push(data.solar_power);
 
-    document.getElementById("solar").innerText = data.solar_power;
-    document.getElementById("battery").innerText = data.battery_level;
-    document.getElementById("load").innerText = data.load;
+        if(chart.data.labels.length > 20){
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
 
+        chart.update();
+
+    } catch (err) {
+        console.error("Fetch error:", err);
+    }
 }
 
-async function loadHistory(){
-
-    const res = await fetch("/history");
-    const data = await res.json();
-
-    chart.data.labels = data.map(d => d.hour);
-    chart.data.datasets[0].data = data.map(d => d.solar);
-
-    chart.update();
-}
-
-setInterval(updateStatus,1000)
-
-loadHistory()
+setInterval(updateStatus, 1000);
+updateStatus(); 
