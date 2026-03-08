@@ -1,43 +1,14 @@
-from sqlalchemy import create_engine, Column, Integer, Float
-from sqlalchemy.orm import declarative_base, sessionmaker
+import sqlite3
 
-DATABASE_URL = "sqlite:///./solar.db"
+def save_data(voltage, current, power):
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
-Base = declarative_base()
-
-
-class Energy(Base):
-    __tablename__ = "energy"
-
-    id = Column(Integer, primary_key=True, index=True)
-    time = Column(Integer)
-    solar = Column(Float)
-    battery = Column(Float)
-
-
-Base.metadata.create_all(bind=engine)
-
-
-def save_data(time, solar, battery):
-    db = SessionLocal()
-
-    data = Energy(
-        time=time,
-        solar=solar,
-        battery=battery
+    cursor.execute(
+        "INSERT INTO solar_data (voltage, current, power) VALUES (?, ?, ?)",
+        (voltage, current, power)
     )
 
-    db.add(data)
-    db.commit()
-    db.close()
+    conn.commit()
+    conn.close()
